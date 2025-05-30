@@ -1,16 +1,21 @@
+# HF Volume Prediction
 
-# Description:
+This repository contains code and data pipelines for predicting high-frequency (HF) trading volume using deep learning models such as LSTMs. The project is structured for clarity, modularity, and reproducibility, and is designed with NeurIPS-style standards in mind.
 
+---
 
+## 🔧 Project Structure
+
+```text
 hf-volume-prediction/
 │
 ├── README.md                  # Project overview, model description, instructions
 ├── requirements.txt           # Python packages required
 ├── LICENSE                    # (e.g., MIT, Apache 2.0)
 ├── checkpoints/
-│   └── best_model.pth        # trained model weights
+│   └── best_model.pth         # trained model weights
 │
-├── config.yaml
+├── config.yaml                # Model and training configuration
 ├── data/                      # Input datasets (or scripts to download them)
 │   └── preprocess.py          # Data preprocessing/feature extraction
 │
@@ -19,17 +24,17 @@ hf-volume-prediction/
 │   ├── train.py               # Training loop
 │   ├── evaluate.py            # Evaluation logic
 │   ├── utils.py               # Utility functions (e.g., metrics, logging)
-│   └── config.py              # Central config for model/data params
+│   └── config.py              # Central config loader (optional)
 │
-├── scripts/                   # Bash or Python scripts for running the pipeline
+├── scripts/                   # Scripts to run training/evaluation
 │   ├── run_train.py
 │   └── run_eval.py
 │
-├── notebooks/                 # Jupyter notebooks for analysis/visualization
-│   └── eda.ipynb              # Exploratory data analysis
+├── notebooks/                 # Jupyter notebooks for visualization and EDA
+│   └── eda.ipynb
 │
-├── results/                   # Plots, metrics, or prediction outputs
+├── results/                   # Prediction outputs and plots
 │   └── test_preds.csv
 │
-└── paper/                     # Optional: PDF or LaTeX source of your NeurIPS paper
+└── paper/                     # Optional NeurIPS paper source
     └── neurips_2025.tex
