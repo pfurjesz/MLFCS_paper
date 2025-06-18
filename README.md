@@ -1,7 +1,6 @@
 # HF Volume Prediction
 
-This repository contains code and data pipelines for predicting high-frequency (HF) trading volume using deep learning models such as LSTMs. The project is structured for clarity, modularity, and reproducibility, and is designed with NeurIPS-style standards in mind.
-
+DESCRIPTION
 ---
 
 ## 🔧 Project Structure
