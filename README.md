@@ -31,6 +31,9 @@ hf-volume-prediction/
 │   ├── tme_ensamble.py      # Model architecture
 │   └── attention_model.py
 │
+├── utils/   # Any function that is intended to be reused across multiple models or notebooks
+│   └── pred_plot.py
+│
 ├── notebooks/                 # Jupyter notebooks for visualization and EDA
 │   ├── eda.ipynb
 │   ├── garch_results.ipynb
