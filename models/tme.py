@@ -26,6 +26,20 @@ def rmse(y, y_hat): return np.sqrt(mean_squared_error(y, y_hat))
 def mae (y, y_hat): return mean_absolute_error(y, y_hat)
 def mape(y, y_hat): return np.mean(np.abs((y - y_hat) / np.clip(y,1,None))) * 100
 
+def iw(low, up) -> float:
+    """Interval width averaged over the test set (Eq. IW in the paper)."""
+    return np.mean(up - low)
+
+def nnll(y_log, mu_log, sigma2_log) -> float:
+    """
+    Predictive Negative Log-Likelihood normalised by number of points.
+    Here computed in log-volume space (exactly as in the paper).
+    """
+    nll_each = 0.5 * (np.log(2*np.pi*sigma2_log) +
+                      (y_log - mu_log)**2 / sigma2_log)
+    return nll_each.mean()          # already divided by T
+
+
 # ---------------------------------------------------------------------
 TRX_COLS = ["buy_volume","sell_volume","buy_txn","sell_txn",
             "volume_imbalance","txn_imbalance"]
@@ -38,12 +52,14 @@ LOB_COLS = ["ask_volume","bid_volume","spread","lob_volume_imbalance",
 # =====================================================================
 class WindowDS(Dataset):
     def __init__(self, df: pd.DataFrame, h: int):
+        self.time = df["datetime"].to_numpy()
         self.trx = torch.tensor(df[TRX_COLS].to_numpy(np.float32))
         self.lob = torch.tensor(df[LOB_COLS].to_numpy(np.float32))
         self.y   = torch.tensor(df["log_deseasoned_total_volume"].to_numpy(np.float32))
         self.mv  = torch.tensor(df["mean_volume"].to_numpy(np.float32))
         self.h   = h
     def __len__(self): return len(self.y)-self.h
+
     def __getitem__(self, i):
         sl = slice(i, i+self.h)
         return self.trx[sl], self.lob[sl], self.y[i+self.h], self.mv[i+self.h]
@@ -58,8 +74,15 @@ def _bilinear(x, L, R, b):
 class _Expert(nn.Module):
     def __init__(self, d, h):
         super().__init__()
-        self.Lm, self.Rm, self.bm = nn.Parameter(torch.randn(d*h,1)*.01), nn.Parameter(torch.randn(1)*.01), nn.Parameter(torch.zeros(1))
-        self.Lv, self.Rv, self.bv = nn.Parameter(torch.randn(d*h,1)*.01), nn.Parameter(torch.randn(1)*.01), nn.Parameter(torch.zeros(1))
+        self.Lm = nn.Parameter(torch.randn(d*h,1)*.01)
+        self.Rm = nn.Parameter(torch.randn(1)*.01)
+        self.bm = nn.Parameter(torch.zeros(1))
+
+
+        self.Lv = nn.Parameter(torch.randn(d*h,1)*.01)
+        self.Rv = nn.Parameter(torch.randn(1)*.01)
+        self.bv = nn.Parameter(torch.zeros(1))
+
     def forward(self, x):
         mu     = _bilinear(x, self.Lm, self.Rm, self.bm)
         logvar = _bilinear(x, self.Lv, self.Rv, self.bv)
@@ -92,7 +115,7 @@ class TME:
         self.train_dl = DataLoader(WindowDS(self.df_train, h), bs, shuffle=True)
         self.val_dl   = DataLoader(WindowDS(self.df_val,   h), bs, shuffle=False)
         self.test_dl  = DataLoader(WindowDS(self.df_test,  h), bs, shuffle=False)
-
+    
         self.net = nn.Module()
         self.net.ex1  = _Expert(len(TRX_COLS), h)
         self.net.ex2  = _Expert(len(LOB_COLS), h)
@@ -168,21 +191,52 @@ class TME:
         sigma  = np.sqrt((np.exp(sigma2_log) - 1) * np.exp(2*mu_log + sigma2_log)) * mv
         low, up = y_pred - 1.96*sigma, y_pred + 1.96*sigma
 
-        print("RMSE",   rmse(y_true, y_pred),
-              "MAE",    mae(y_true, y_pred),
-              "R2",     r2_score(y_true, y_pred),
-              "MAPE%",  mape(y_true, y_pred),
-              "Coverage", np.mean((y_true >= low) & (y_true <= up)) * 100)
-        self._plot(y_true, y_pred, low, up)
+        print(f"{'Metric':<10} | {'Value':>10}")
+        print("-" * 23)
+        print(f"{'RMSE':<10}   | {rmse(y_true, y_pred):10.2f}")
+        print(f"{'MAE':<10}    | {mae(y_true, y_pred):10.2f}")
+        print(f"{'R²':<10}     | {r2_score(y_true, y_pred):10.4f}")
+        print(f"{'MAPE (%)':<10}| {mape(y_true, y_pred):10.2f}")
+        print(f"{'Coverage':<10}| {np.mean((y_true >= low) & (y_true <= up)) * 100:10.1f} %")
+        print(f"{'IW':<10}     | {iw(low, up):10.2f}")
+        print(f"{'NNLL':<10}   | {nnll(y_log, mu_log, sigma2_log):10.4f}")
+        
+        # low is just 0 with the same length as y_pred
+        low = np.zeros_like(y_pred)  # no lower bound for the band
+        up  = np.clip(up, 0, 5000)
+        low = np.clip(low, 0, 5000)
+        y_pred = np.clip(y_pred, 0, 5000)
+        self._plot(y_true, y_pred, low, up, x=self.df_test["datetime"].values[self.h:])
+
+        return(y_true,y_pred)
 
     # ---------- plotting util
-    def _plot(self, y, y_hat, low, up):
-        plt.figure(figsize=(6,3))
-        plt.plot(self.tr_curve, label="train"); plt.plot(self.va_curve, label="val")
+
+    def _plot(self, y, y_hat, low, up, x=None):
+        """
+        Plots learning curves and prediction bands.
+
+        Parameters:
+            y      : true values (1D array)
+            y_hat  : predicted values (1D array)
+            low    : lower bound of prediction band
+            up     : upper bound of prediction band
+            x      : optional x-axis (same length as y); default: range(len(y))
+        """
+        plt.figure(figsize=(6, 3))
+        plt.plot(self.tr_curve, label="train")
+        plt.plot(self.va_curve, label="val")
         plt.title("NLL"); plt.legend(); plt.tight_layout(); plt.show()
 
-        plt.figure(figsize=(10,3))
-        plt.fill_between(range(len(y_hat)), low, up, color="#9ecae1", alpha=.3, label="95 % band")
-        plt.plot(y,      label="true", lw=.7)
-        plt.plot(y_hat,  label="pred", lw=.7)
+        if x is None:
+            x = range(len(y_hat))
+
+        plt.figure(figsize=(10, 3))
+        plt.fill_between(x, low, up, color="#9ecae1", alpha=0.3, label="95 % band")
+        plt.plot(x, y,     label="true", lw=0.7)
+        plt.plot(x, y_hat, label="pred", lw=0.7)
+        if isinstance(x, (pd.Series, np.ndarray)) and np.issubdtype(np.array(x).dtype, np.datetime64):
+            plt.xlabel("time")
+        else:
+            plt.xlabel("sample")
         plt.legend(); plt.tight_layout(); plt.show()
