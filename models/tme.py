@@ -189,7 +189,7 @@ class TME:
         y_true = np.exp(y_log) * mv
         y_pred = np.exp(mu_log) * mv
         sigma  = np.sqrt((np.exp(sigma2_log) - 1) * np.exp(2*mu_log + sigma2_log)) * mv
-        low, up = y_pred - 1.96*sigma, y_pred + 1.96*sigma
+        low, up = y_pred - 0.5*sigma, y_pred + 0.5*sigma
 
         print(f"{'Metric':<10} | {'Value':>10}")
         print("-" * 23)
@@ -204,7 +204,7 @@ class TME:
         # low is just 0 with the same length as y_pred
         low = np.zeros_like(y_pred)  # no lower bound for the band
         up  = np.clip(up, 0, 5000)
-        low = np.clip(low, 0, 5000)
+        low = 0
         y_pred = np.clip(y_pred, 0, 5000)
         self._plot(y_true, y_pred, low, up, x=self.df_test["datetime"].values[self.h:])
 
