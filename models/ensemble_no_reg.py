@@ -1,5 +1,7 @@
 # =====================================================================
 # Temporal Mixture Ensemble (TME) - Full Implementation with Model Selection
+
+# I DECIDED TO KEEP IT, BUT MAINLY USED ONE IS ENSAMBLE AND ENSAMBLE WITH CV
 # =====================================================================
 import pandas as pd
 import numpy as np

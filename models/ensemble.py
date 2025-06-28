@@ -177,7 +177,7 @@ class TME_ensemble:
         return model.to(DEVICE).double()
     
     def train(self):
-        """Train ensemble of models and keep only top 50%"""
+        """Train ensemble of models and keep only top 100% (it can be reduced)"""
         lr = self.cfg["model_params"]["learning_rate"]
         epochs = self.cfg["model_params"]["epochs"]
         
@@ -233,12 +233,12 @@ class TME_ensemble:
             self.models.append(model)
             self.model_performance.append(best_val)
         
-        # After all models trained, select top 50%
+        # After all models trained
         self._select_best_models()
     
     def _select_best_models(self):
-        """Select top 50% of models based on validation performance"""
-        n_keep = max(1, int(self.n_models * 0.5))
+        """Select top 100% of models based on validation performance"""
+        n_keep = max(1, int(self.n_models * 1))
         self.model_performance = np.array(self.model_performance)
         sorted_indices = np.argsort(self.model_performance)
         self.selected_models = sorted_indices[:n_keep]
@@ -457,6 +457,9 @@ class TME_ensemble:
         
         
     '''
+
+    OPTIONAL IF WE WANT TO KEEP THE OLD EVALUATE FUNCTION
+
     def evaluate(self):
         """Evaluate ensemble on test set"""
         y_log, mu_log, sigma2_log, mv = self._predict_loader(self.test_dl)

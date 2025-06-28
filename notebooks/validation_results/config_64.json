@@ -1,0 +1,17 @@
+{
+  "config_id": 64,
+  "params": {
+    "batch_size": 4096,
+    "epochs": 35,
+    "horizon": 50,
+    "l2_lambda": 0.1,
+    "learning_rate": 0.01,
+    "n_models": 10
+  },
+  "params_per_model": 3210,
+  "total_params": 32100,
+  "avg_val_loss": 1.835129274816431,
+  "std_val_loss": 0.08765524818673782,
+  "training_time": 51.251892,
+  "epochs_to_converge": 35
+}
