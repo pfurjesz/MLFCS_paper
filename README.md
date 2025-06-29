@@ -1,13 +1,9 @@
-# HF Volume Prediction
-
-DESCRIPTION
----
-
-
-
-
-We propose a Temporal Mixture Ensemble (TME) model for probabilistic forecasting of intraday trading volume in cryptocurrency markets. Our model integrates temporal dynamics across multiple predictive components using a data-driven attention-like mixing mechanism. Evaluated on high-frequency Bitstamp exchange transaction and order book data. 
-
+# HF Volume Prediction  
+**Model**: Temporal Mixture Ensemble (TME) for cryptocurrency intraday volume forecasting.  
+**Data**: High-frequency Bitstamp exchange transactions and order book data.  
+**Key Features**:  
+- Attention-like mixing mechanism.  
+- Probabilistic forecasting.  
 
 HF-Volume-Prediction/
 ├── README.md
@@ -35,3 +31,4 @@ HF-Volume-Prediction/
         ├── ensemble_run_hyper_param.ipynb
         ├── tme_run.ipynb
         └── distribution_test.ipynb
+        
