@@ -147,7 +147,7 @@ class TME_ensemble:
         self.scaler_trx.fit(self.df_train[TRX_COLS])
         self.scaler_lob.fit(self.df_train[LOB_COLS])
         
-        h = cfg["model_params"].get("horizon", 100)
+        h = cfg["model_params"].get("horizon", 50)
         bs = cfg["model_params"]["batch_size"]
         
         # Create datasets with normalization
@@ -159,8 +159,8 @@ class TME_ensemble:
         self.val_dl = DataLoader(self.val_ds, bs, shuffle=False)
         self.test_dl = DataLoader(self.test_ds, bs, shuffle=False)
         
-        self.n_models = cfg["model_params"].get("n_models", 20)
-        self.l2_lambda = cfg["model_params"].get("l2_lambda", 0.01)
+        self.n_models = cfg["model_params"].get("n_models", 10)
+        self.l2_lambda = cfg["model_params"].get("l2_lambda", 0.1)
         self.models = []
         self.model_performance = []
         self.h = h
