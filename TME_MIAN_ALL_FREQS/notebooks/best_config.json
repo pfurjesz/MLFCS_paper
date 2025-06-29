@@ -1,0 +1,8 @@
+{
+  "batch_size": 4096,
+  "epochs": 15,
+  "horizon": 50,
+  "l2_lambda": 0.1,
+  "learning_rate": 0.1,
+  "n_models": 10
+}
