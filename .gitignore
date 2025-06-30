@@ -1,0 +1,8 @@
+# ML_fin_project/
+TME_alt_1m/__pycache__/
+TME_alt_1m/*.pyc
+TME_alt_1m/*.pyo
+TME_alt_1m/.DS_Store
+TME_alt_1m/.huggingface_token
+TME_alt_1m/.cache/
+TME_alt_1m/data/
